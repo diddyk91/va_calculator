@@ -46,6 +46,9 @@ class VaCalculator:
         bilateral_disabilities: list = [],
         scenario_name: str = "",
     ):
+        if not scenario_name:
+            scenario_name = str(len(self.scenarios))
+
         if type(disabilities) is dict:
             disabilities_values = disabilities.values()
         else:
@@ -55,9 +58,16 @@ class VaCalculator:
 
         if bilateral_disabilities:
             disabilities_values.insert(
-                0, round(self.combined_rating(bilateral_disabilities) * 1.1)
+                0,
+                round(
+                    self.combined_rating(
+                        bilateral_disabilities,
+                        scenario_name=f"BilateralCombined_{scenario_name}",
+                    )
+                    * 1.1
+                ),
             )
-            print(disabilities_values)
+            # print(disabilities_values)
         cumulative_rating = self.transition(
             disabilities_values[0], disabilities_values[1]
         )
