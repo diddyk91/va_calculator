@@ -46,11 +46,10 @@ class VaCalculator:
         bilateral_disabilities: list = [],
         scenario_name: str = "",
     ):
-        if type(disabilities) == dict:
-            disabilities_names = list(disabilities.keys())
+        if type(disabilities) is dict:
             disabilities_values = disabilities.values()
         else:
-            disabilities_names = None
+            disabilities_values = disabilities
 
         disabilities_values = sorted(disabilities_values, reverse=True)
 
@@ -73,10 +72,7 @@ class VaCalculator:
 
 
 # %%
-
 calc = VaCalculator()
-
-dff = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
 # %% Current
@@ -91,19 +87,9 @@ calc.combined_rating(
     scenario_name="CurrentRating",
 )
 df = calc.scenarios.copy()
-# %% Current + Sleep Apnea
-combined_rating(
-    {
-        "Anxiety": 50,
-        "back": 20,
-        "right leg": 10,
-        "right ankle": 10,
-        "tinitus": 10,
-        "Sleep Apnea": 50,
-    }
-)
-# %% Strat 1
-# Don't get sleep apnea, increase back rating. Add Migraines and Sinusitis
+
+# %% try bilaterals
+
 calc.combined_rating(
     {
         "Anxiety": 50,
@@ -115,61 +101,3 @@ calc.combined_rating(
     {"left leg": 20, "right leg": 20, "right foot": 10},
 )
 df = calc.scenarios
-# %% Strat 2 - get sleep apnea, migraines, and sinusitis.
-combined_rating(
-    {
-        "Anxiety": 50,
-        "Sleep Apnea": 50,  # Need to file
-        "Migraines": 50,  # Need to file
-        "Sinusitis": 10,  # Need to file
-        "Back": 20,
-        "Tinittus": 10,
-        "right leg": 10,
-        "right ankle": 10,
-        "rhinitis": 10,
-    }
-)
-
-# %% What if 1 - only get migraines added. 90%
-combined_rating(
-    {
-        "Anxiety": 50,
-        "Migraines": 50,  # Need to file
-        "Back": 20,
-        "Tinittus": 10,
-        "right leg": 10,
-        "right ankle": 10,
-    }
-)
-
-# %% What if: only get migraines added and back increased? 93!!!
-# I need another 20% something to get to 100.
-combined_rating(
-    {
-        "Anxiety": 50,
-        "Migraines": 50,  # Need to file
-        "Back": 40,
-        # 'something': 20,
-        "Tinittus": 10,
-    },
-    {"left leg": 20, "right leg": 20, "right foot": 10},
-)
-
-# %% What if 2 - only get sinusitis added - 80%
-combined_rating(
-    {
-        "Anxiety": 50,
-        "Sinusitis": 30,  # Need to file
-        "Back": 20,
-        "Tinittus": 10,
-        "right leg": 10,
-        "right ankle": 10,
-    }
-)
-# %% What if 3 - Only get a back increase. 90%
-combined_rating(
-    {"Anxiety": 50, "OSA": 50, "Back": 40, "Sinusitis": 30, "Tinittus": 10},
-    {"left leg": 20, "right leg": 20, "right foot": 10},
-)
-
-# %%
