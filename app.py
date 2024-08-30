@@ -9,62 +9,88 @@ Created on Mon Jun 17 16:55:09 2024
 import pandas as pd
 import numpy as np
 
-transition_matrix = pd.DataFrame(
-    index=pd.Index(range(19, 100)),
-    columns=[f"{i}" for i in range(10, 100, 10)],
-)
 
-for i in transition_matrix.index:
-    ableness = 1 - i / 100
-    current_disability = i / 100
-    transition = np.arange(0.1, 1, 0.1)
+class VaCalculator:
 
-    new_combined_rating = ableness * transition + current_disability
-
-    transition_matrix.loc[i, :] = new_combined_rating
-
-transition_matrix = (transition_matrix.astype(float).round(2) * 100).astype(
-    int
-)
-
-
-def transition(starting_disability, next_disability):
-    return transition_matrix.loc[starting_disability, f"{next_disability}"]
-
-
-def combined_rating(
-    disabilities: (dict, list), bilateral_disabilities: list = []
-):
-    if type(disabilities) == dict:
-        disabilities_names = list(disabilities.keys())
-        disabilities = disabilities.values()
-    else:
-        disabilities_names = None
-
-    disabilities = sorted(disabilities, reverse=True)
-
-    if bilateral_disabilities:
-        disabilities.insert(
-            0, round(combined_rating(bilateral_disabilities) * 1.1)
+    def __init__(self):
+        self.transition_matrix = pd.DataFrame(
+            index=pd.Index(range(19, 100)),
+            columns=[f"{i}" for i in range(10, 100, 10)],
         )
-        print(disabilities)
-    cumulative_rating = transition(disabilities[0], disabilities[1])
-    for disability in disabilities[2:]:
-        cumulative_rating = transition(cumulative_rating, disability)
 
-    return cumulative_rating
+        for i in self.transition_matrix.index:
+            ableness = 1 - i / 100
+            current_disability = i / 100
+            transition = np.arange(0.1, 1, 0.1)
+
+            new_combined_rating = ableness * transition + current_disability
+
+            self.transition_matrix.loc[i, :] = new_combined_rating
+
+        self.transition_matrix = (
+            self.transition_matrix.astype(float).round(2) * 100
+        ).astype(int)
+
+        self.scenarios = pd.DataFrame(
+            columns=["Disabilities", "CombinedRating"]
+        )
+
+    def transition(self, starting_disability, next_disability):
+        return self.transition_matrix.loc[
+            starting_disability, f"{next_disability}"
+        ]
+
+    def combined_rating(
+        self,
+        disabilities: (dict, list),
+        bilateral_disabilities: list = [],
+        scenario_name: str = "",
+    ):
+        if type(disabilities) == dict:
+            disabilities_names = list(disabilities.keys())
+            disabilities_values = disabilities.values()
+        else:
+            disabilities_names = None
+
+        disabilities_values = sorted(disabilities_values, reverse=True)
+
+        if bilateral_disabilities:
+            disabilities_values.insert(
+                0, round(self.combined_rating(bilateral_disabilities) * 1.1)
+            )
+            print(disabilities_values)
+        cumulative_rating = self.transition(
+            disabilities_values[0], disabilities_values[1]
+        )
+        for disability in disabilities_values[2:]:
+            cumulative_rating = self.transition(cumulative_rating, disability)
+
+        self.scenarios.loc[
+            scenario_name if scenario_name else len(self.scenarios)
+        ] = (disabilities, cumulative_rating)
+
+        return cumulative_rating
+
+
+# %%
+
+calc = VaCalculator()
+
+dff = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
 
 # %% Current
-combined_rating(
+calc.combined_rating(
     {
         "Anxiety": 50,
         "back": 20,
         "right leg": 10,
         "right ankle": 10,
         "tinitus": 10,
-    }
+    },
+    scenario_name="CurrentRating",
 )
+df = calc.scenarios.copy()
 # %% Current + Sleep Apnea
 combined_rating(
     {
@@ -78,7 +104,7 @@ combined_rating(
 )
 # %% Strat 1
 # Don't get sleep apnea, increase back rating. Add Migraines and Sinusitis
-combined_rating(
+calc.combined_rating(
     {
         "Anxiety": 50,
         "Migraines": 50,  # Need to file
@@ -88,6 +114,7 @@ combined_rating(
     },
     {"left leg": 20, "right leg": 20, "right foot": 10},
 )
+df = calc.scenarios
 # %% Strat 2 - get sleep apnea, migraines, and sinusitis.
 combined_rating(
     {
